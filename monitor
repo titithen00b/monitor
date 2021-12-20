@@ -1,0 +1,58 @@
+#!/bin/bash
+echo " "
+echo " "
+echo " "
+date
+
+#spécifier le lecteur a vérifier 
+mount1=
+mount2=
+
+#Script moniteur. Passer le(s) nom(s) du(des) service(s) en paramètre(s)
+
+service=$@
+montage1=$(mount| grep '$mount1' | wc -l)
+montage2=$(mount| grep '$mount2' | wc -l)
+
+
+if [[ -z "$service" ]]; then
+  echo "Merci de spécifié un nom de service"
+fi
+
+#Boucle permettant d'appliquer tous les paramètre afin de faire la vérifications
+
+for var in $service
+
+do
+
+    #Verif de l'etat du(des) service(s). La commande sort 0 si le(s) service(s) est(sont) actif(s) et 3 si il(s) est(sont) non demarré(s)
+    /bin/systemctl -q is-active "$var.service"
+    status=$?
+
+    #Lancement des vérifications
+
+    if [[ "$status" == 0 ]]; then
+      echo "Le service $var est déjà démarré "
+
+    else
+      #Démarrage du(des) service(s)
+      /bin/systemctl start "$var.service"
+      echo "Le service $var n'était pas démarré. Celui-ci démarre !"
+
+    fi
+
+done
+
+#Vérification du montage des volumes. Si le dossier n'est pas monté, montage de tous les points de montage.
+
+if [[ $montage1 == 0 ]] || [[ $montage2 == 0 ]]; then
+  echo "Les disques n'était pas tous montés. Montage en cours..."
+  /usr/bin/mount -a
+  echo "Les disques sont montés."
+
+else
+  echo "Les montages sont déjà effectifs."
+
+fi
+
+mount -a
